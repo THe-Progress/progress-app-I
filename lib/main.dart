@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:device_apps/device_apps.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'StreakIndicator.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,9 +33,6 @@ class _MyAppState extends State<MyApp> {
 
       // Set the date range
       DateTime endDate = DateTime.now();
-      // DateTime now = DateTime.now();
-      // DateTime startDate = DateTime(now.year, now.month, now.day, 0, 0, 0);
-
       DateTime startDate = endDate.subtract(Duration(days: 72));
 
       // Query network info and usage stats
@@ -81,13 +81,27 @@ class _MyAppState extends State<MyApp> {
         _usageInfoMap = usageInfoMap;
       });
     } catch (err) {
-      print(err);
+      Fluttertoast.showToast(
+        msg: "Failed to load usage data: $err",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: TextTheme(
+          headline1: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
+          headline6: TextStyle(fontSize: 20.0, fontStyle: FontStyle.italic),
+          bodyText2: TextStyle(fontSize: 14.0, fontFamily: 'Hind'),
+        ),
+      ),
       home: Scaffold(
         appBar: AppBar(
           title: const Text("Usage Stats"),
@@ -98,41 +112,72 @@ class _MyAppState extends State<MyApp> {
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: initUsage,
-          child: ListView.separated(
-            itemBuilder: (context, index) {
-              var app = installedApps[index];
-              print(app.packageName);
-              var networkInfo = _netInfoMap[app.packageName];
-              var usageInfo = _usageInfoMap[app.packageName];
+        body: Column(
+          children: [
+            StreakIndicator(), // Add the StreakIndicator widget here
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: initUsage,
+                child: installedApps.isEmpty
+                    ? Center(
+                        child: SpinKitFadingCircle(
+                          color: Colors.blue,
+                          size: 50.0,
+                        ),
+                      )
+                    : ListView.separated(
+                        itemBuilder: (context, index) {
+                          var app = installedApps[index];
+                          var networkInfo = _netInfoMap[app.packageName];
+                          var usageInfo = _usageInfoMap[app.packageName];
 
-              return ListTile(
-                leading: app is ApplicationWithIcon
-                    ? Image.memory((app as ApplicationWithIcon).icon,
-                        width: 40, height: 40)
-                    : null,
-                title: Text(app.appName),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    networkInfo == null
-                        ? Text("Unknown network usage")
-                        : Text(
-                            "Received bytes: ${networkInfo.rxTotalBytes}\nTransferred bytes: ${networkInfo.txTotalBytes}",
-                          ),
-                    usageInfo == null
-                        ? Text("No usage data")
-                        : Text(
-                            "Time in foreground: ${formatDuration(Duration(milliseconds: int.parse(usageInfo.totalTimeInForeground!)))}",
-                          ),
-                  ],
-                ),
-              );
-            },
-            separatorBuilder: (context, index) => Divider(),
-            itemCount: installedApps.length,
-          ),
+                          return Card(
+                            elevation: 4.0,
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: ListTile(
+                              leading: app is ApplicationWithIcon
+                                  ? CircleAvatar(
+                                      backgroundImage: MemoryImage(
+                                          (app as ApplicationWithIcon).icon),
+                                      radius: 20,
+                                    )
+                                  : null,
+                              title: Text(app.appName,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  networkInfo == null
+                                      ? Text("Unknown network usage")
+                                      : Text(
+                                          "Received bytes: ${networkInfo.rxTotalBytes}\nTransferred bytes: ${networkInfo.txTotalBytes}",
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                        ),
+                                  SizedBox(height: 4),
+                                  usageInfo == null
+                                      ? Text("No usage data")
+                                      : Text(
+                                          "Time in foreground: ${formatDuration(Duration(milliseconds: int.parse(usageInfo.totalTimeInForeground!)))}",
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                        ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) => Divider(),
+                        itemCount: installedApps.length,
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
