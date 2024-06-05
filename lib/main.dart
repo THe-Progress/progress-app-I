@@ -33,7 +33,9 @@ class _MyAppState extends State<MyApp> {
 
       // Set the date range
       DateTime endDate = DateTime.now();
-      DateTime startDate = endDate.subtract(Duration(days: 72));
+      // DateTime now = DateTime.now();
+      // DateTime startDate = DateTime(now.year, now.month, now.day, 0, 0, 0);
+      DateTime startDate = endDate.subtract(Duration(days: 1));
 
       // Query network info and usage stats
       List<NetworkInfo> networkInfos = await UsageStats.queryNetworkUsageStats(
