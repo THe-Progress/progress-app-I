@@ -30,7 +30,10 @@ class _MyAppState extends State<MyApp> {
 
       // Set the date range
       DateTime endDate = DateTime.now();
-      DateTime startDate = endDate.subtract(Duration(days: 1));
+      // DateTime now = DateTime.now();
+      // DateTime startDate = DateTime(now.year, now.month, now.day, 0, 0, 0);
+
+      DateTime startDate = endDate.subtract(Duration(days: 72));
 
       // Query network info and usage stats
       List<NetworkInfo> networkInfos = await UsageStats.queryNetworkUsageStats(
@@ -57,9 +60,8 @@ class _MyAppState extends State<MyApp> {
       installedApps = await DeviceApps.getInstalledApplications(
         includeSystemApps: false,
         includeAppIcons: true,
-        onlyAppsWithLaunchIntent: false,
+        onlyAppsWithLaunchIntent: true,
       );
-
       // Sort installed apps by time in foreground (descending)
       installedApps.sort((a, b) {
         int aTimeInForeground =
@@ -101,6 +103,7 @@ class _MyAppState extends State<MyApp> {
           child: ListView.separated(
             itemBuilder: (context, index) {
               var app = installedApps[index];
+              print(app.packageName);
               var networkInfo = _netInfoMap[app.packageName];
               var usageInfo = _usageInfoMap[app.packageName];
 
